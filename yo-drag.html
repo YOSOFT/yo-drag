@@ -1,0 +1,87 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="yo-drag">
+  <template>
+        <style>
+        :host {
+            display: block;
+        }
+        #container > ::slotted(*) {
+                display: block;
+                width: 100%;
+            }
+        </style>
+        <div id="container">
+            <slot></slot>
+        </div>
+    </template>
+
+  <script>
+    var dragSrcEl = null;
+    /**
+     * `yo-drag`
+     * simple drag and drop
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class YoDrag extends Polymer.Element {
+            static get is() {return 'yo-drag';}
+
+            constructor() {
+                super();
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.addEventListener('dom-change', this._attachEvents);
+                this._attachEvents();
+            }
+
+            _attachEvents() {
+                Array.prototype.forEach.call(this.children, child => {
+                    child.draggable = true;
+                    this._addDnDHandlers(child);
+                });
+            }
+            _handleDragStart(e) {
+                dragSrcEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.outerHTML);
+            }
+
+            _handleDragOver(e) {
+                if (e.preventDefault) {
+                    e.preventDefault(); // Necessary. Allows us to drop.
+                }
+                e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
+                return false;
+            }
+
+            _handleDrop(e) {
+                let player = e.target
+                if (e.stopPropagation) {
+                    e.stopPropagation(); // Stops some browsers from redirecting.
+                }
+
+                // Don't do anything if dropping the same column we're dragging.
+                // Set the source column's HTML to the HTML of the column we dropped on.
+                if (dragSrcEl != this) {
+                        this.parentNode.removeChild(dragSrcEl);
+                        var dropHTML = e.dataTransfer.getData('text/html');
+                        this.insertAdjacentHTML('beforebegin',dropHTML);
+                        var dropElem = this.previousSibling;
+                        Polymer.dom(player).parentNode._addDnDHandlers(dropElem);
+                }
+            }
+            _addDnDHandlers(child){
+                child.addEventListener('dragstart', this._handleDragStart, false);
+                child.addEventListener('dragover', this._handleDragOver, false);
+                child.addEventListener('drop', this._handleDrop, false);
+            }
+        }
+
+    window.customElements.define(YoDrag.is, YoDrag);
+  </script>
+</dom-module>
