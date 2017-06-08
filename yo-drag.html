@@ -9,7 +9,10 @@
         #container > ::slotted(*) {
                 display: block;
                 width: 100%;
-            }
+        }   
+        ::slotted(.over){
+            border-top: 2px dashed #f5f5f5;
+        }
         </style>
         <div id="container">
             <slot></slot>
@@ -40,6 +43,7 @@
             }
 
             _attachEvents() {
+                console.log('attachevent')
                 Array.prototype.forEach.call(this.children, child => {
                     child.draggable = true;
                     this._addDnDHandlers(child);
@@ -50,7 +54,11 @@
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', this.outerHTML);
             }
-
+            _handleDragEnter(e) {
+                // this / e.target is the current hover target.
+                this.classList.add('over');
+            }
+             
             _handleDragOver(e) {
                 if (e.preventDefault) {
                     e.preventDefault(); // Necessary. Allows us to drop.
@@ -58,7 +66,6 @@
                 e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
                 return false;
             }
-
             _handleDrop(e) {
                 let player = e.target
                 if (e.stopPropagation) {
@@ -74,11 +81,27 @@
                         var dropElem = this.previousSibling;
                         Polymer.dom(player).parentNode._addDnDHandlers(dropElem);
                 }
+                return false;
             }
+            _handleDragLeave(e) {
+                // this / e.target is the current hover target.
+                this.classList.remove('over');
+            }
+            _handleDragEnd(e) {
+                console.info('end', dragSrcEl);
+                Array.prototype.forEach.call(this.children, child => {
+                    console.info('end', chlid);
+                   chlid.classList.remove('over');
+                });
+            }
+            
             _addDnDHandlers(child){
                 child.addEventListener('dragstart', this._handleDragStart, false);
+                child.addEventListener('dragenter', this._handleDragEnter, false);
                 child.addEventListener('dragover', this._handleDragOver, false);
                 child.addEventListener('drop', this._handleDrop, false);
+                child.addEventListener('dragleave', this._handleDragLeave, false);
+                child.addEventListener('dragend', this._handleDragEnd, false);
             }
         }
 
